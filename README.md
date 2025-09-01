@@ -53,30 +53,33 @@ Create a trip of Delete a trip
 
 ## Structure
 
-Model/
-├── Makefile
-├── data/
-│   └── input.txt
-├── include/
-│   ├── types.h                 // Basic, common data types (Point, PacketType)
-│   ├── entities.h              // Structs for static problem entities (Village, Helicopter)
-│   ├── solution.h              // Classes for the dynamic solution state (Trip, Plan)
-│   ├── parser.h                // Handles reading and parsing the input file
-│   ├── evaluator.h             // Implements the objective/score function
-│   ├── initial_solution.h      // Logic for generating the first greedy solution
-│   ├── local_search.h          // The main local search algorithm engine
-│   └── utils.h                 // Helper functions like distance calculation
-└── src/
-    ├── main.cpp
-    ├── parser.cpp
-    ├── evaluator.cpp
-    ├── initial_solution.cpp
-    ├── local_search.cpp
-    └── utils.cpp
+Model
+- Makefile
+- data/
+    - input.txt
+- include/
+    - types.h                 // Basic, common data types (Point, PacketType)
+    - entities.h              // Structs for static problem entities (Village, Helicopter)
+    - solution.h              // Classes for the dynamic solution state (Trip, Plan)
+    - parser.h                // Handles reading and parsing the input file
+    - evaluator.h             // Implements the objective/score function
+    - initial_solution.h      // Logic for generating the first greedy solution
+    - local_search.h          // The main local search algorithm engine
+    - utils.h                 // Helper functions like distance calculation
+- src/
+    - main.cpp
+    - parser.cpp
+    - evaluator.cpp
+    - initial_solution.cpp
+    - local_search.cpp
+    - utils.cpp
 
 ## TODOS
 
-- [-] input parser
+- [ ] entities
+- [ ] utils
+- [ ] types
+- [ ] input parser
 - [ ] structures
 - [ ] deciding heuristic
 
