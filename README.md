@@ -15,3 +15,12 @@
     - For each trip
         - number of packages of d,p and o, number of villages, village id, number of packages to each type per village
     - -1 
+
+
+## TODOS
+
+- [-] input parser
+- [ ] structures
+- [ ] deciding heuristic
+
+
