@@ -76,11 +76,13 @@ Model
 
 ## TODOS
 
-- [ ] entities
-- [ ] utils
-- [ ] types
-- [ ] input parser
-- [ ] structures
-- [ ] deciding heuristic
+- [x] evaluator
+- [x] deciding heuristic
+- [ ] Neighbourhood function
+- [ ] Validation file
+- [ ] Initial greedy state
+- [ ] Greedy hill climbing
+- [ ] Random Restarts
+
 
 

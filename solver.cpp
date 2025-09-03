@@ -1,25 +1,64 @@
 #include "solver.h"
 #include <iostream>
-#include <chrono>
+#include "evaluator.h"
+#include "utils.h"
 
 using namespace std;
-// You can add any helper functions or classes you need here.
 
-/**
- * @brief The main function to implement your search/optimization algorithm.
- * * This is a placeholder implementation. It creates a simple, likely invalid,
- * plan to demonstrate how to build the Solution object. 
- * * TODO: REPLACE THIS ENTIRE FUNCTION WITH YOUR ALGORITHM.
- */
+// ------------------------- NEIGHBOURHOOD FUNCTION --------------------------------------------
+
+Solution neighbour(Solution& currSoln, ProblemData& problem){
+
+    vector<Solution> adj;
+    double best=evaluate(currSoln, problem);
+    int H=problem.helicopters.size();
+
+    Solution bestSoln = currSoln;
+
+    // Generating one neighbour for each Helicopter
+    for(int i=0;i<H;i++){
+
+        Solution candidate = currSoln;
+
+        if(candidate[i].trips.empty()) continue;
+
+        // generate a random trip index to modify
+        int rndId=random_number(0,H-1);
+        Trip& modify_trip=candidate[i].trips[rndId];
+        
+        //pick a random type of move
+        int move=random_number(1, 3);
+
+        if(move==1){
+            // reroute the trip by moving villages
+        }
+        else if(move==2){
+            // optimize cargo
+        }
+        else{
+            // Add/delete villages
+
+        }
+
+        // todo: check validity
+    }
+
+    for(auto& neighbour : adj){
+        double neighbour_score=evaluate(neighbour,problem);
+        if(neighbour_score > best){
+            best=neighbour_score;
+            bestSoln=neighbour;
+        }
+    }
+    return bestSoln;
+
+}
+
+//---------------------------------------------------------------//
 Solution solve(const ProblemData& problem) {
     cout << "Starting solver..." << endl;
 
     Solution solution;
-
-    // --- START OF PLACEHOLDER LOGIC ---
-    // This is a naive example: send each helicopter on one trip to the first village.
-    // This will definitely violate constraints but shows the structure.
-    
     for (const auto& helicopter : problem.helicopters) {
         HelicopterPlan plan;
         plan.helicopter_id = helicopter.id;
