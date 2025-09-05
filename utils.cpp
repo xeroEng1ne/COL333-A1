@@ -77,12 +77,3 @@ vector<Village> giveVillages(Trip& trip, const ProblemData& problem){
 }
 
 
-// for debug
-double calculate_trip_weight(Trip& trip, const ProblemData& problem) {
-    double total_weight = 0;
-    // Note: This calculates weight based on PICKED UP cargo.
-    total_weight += trip.dry_food_pickup * problem.packages[0].weight;
-    total_weight += trip.perishable_food_pickup * problem.packages[1].weight;
-    total_weight += trip.other_supplies_pickup * problem.packages[2].weight;
-    return total_weight;
-}

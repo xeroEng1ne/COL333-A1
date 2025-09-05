@@ -13,6 +13,5 @@ double getTripValue(Trip& trip, const ProblemData& problem);
 double getTripDistance(Trip& trip, const ProblemData& problem,const Point& homeCity);
 vector<double> getPackagesNumber(Trip& trip, const ProblemData& problem);
 vector<Village> giveVillages(Trip& trip, const ProblemData& problem);
-double calculate_trip_weight(Trip& trip, const ProblemData& problem);
 
 #endif

@@ -1,3 +1,4 @@
+
 #include "solver.h"
 #include <iostream>
 #include "utils.h"
@@ -30,6 +31,39 @@ double evaluate(Solution& solution, const ProblemData& problem){
 }
 
 // -----------NEIGHBOURHOOD FUNCTION ----------
+
+// for debugging
+// vector<Solution> neighbours;
+
+// ------------------- Extras ---------------------------------
+
+// void printSolution(const Solution& solution, const ProblemData& problem){
+//     cout<<"-------------------------------------------------"<<endl;
+//     double totalScore=evaluate(const_cast<Solution&>(solution),problem);
+//
+//     for(const auto& plan : solution){
+//         cout<<" [Helicopter "<<plan.helicopter_id<<"]"<<endl;
+//         if(plan.trips.empty()){
+//             cout<<"     - No trips assigned"<<endl;
+//             continue;
+//         }
+//         int tripNum=1;
+//         for(const auto& trip:plan.trips){
+//             cout<<" - Trip "<<tripNum++<<":"<<endl;
+//             cout<<" Pickup: "<<trip.dry_food_pickup<<"d, "<<trip.perishable_food_pickup<<"p, "<<trip.other_supplies_pickup<<"o"<<endl;
+//             if(trip.drops.empty()){
+//                 cout<<" - No drops"<<endl;
+//             }
+//             for(const auto& drop : trip.drops){
+//                 cout<<" -> Drop at Village "<<drop.village_id<<": "
+//                     <<drop.dry_food<<"d, "
+//                     <<drop.perishable_food<<"p, "
+//                     <<drop.other_supplies<<"o"<<endl;
+//             }
+//         }
+//     }
+//     cout<<"-------------------------------------------------"<<endl;
+// }
 
 Solution neighbour(Solution& currSoln, const ProblemData& problem){
 
@@ -121,36 +155,36 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
                 }
             }
         }
-        // else if(move==4){
-        //     // change the cargo that is carried by the helicopter
-        //     int d=trip.dry_food_pickup;
-        //     int p=trip.perishable_food_pickup;
-        //     int o=trip.other_supplies_pickup;
-        //     int dw=problem.packages[0].weight;
-        //     int pw=problem.packages[1].weight;
-        //     int ow=problem.packages[2].weight;
-        //
-        //     int curr_weight=d*dw+p*pw+o*ow;
-        //     int rem_capacity=currHeli.weight_capacity-curr_weight;
-        //
-        //     if(rem_capacity>=pw){
-        //         trip.perishable_food_pickup++;
-        //     }
-        //     else if(trip.dry_food_pickup>0){
-        //         while(trip.dry_food_pickup>0 && rem_capacity<pw){
-        //             trip.dry_food_pickup--;
-        //             rem_capacity+=dw;
-        //             trip.perishable_food_pickup++;
-        //         }
-        //     }
-        //     else if(rem_capacity>=dw){
-        //         trip.dry_food_pickup++;
-        //     }
-        //     else if(rem_capacity>=ow){
-        //         trip.other_supplies_pickup++;
-        //     }
-        // }
+        else if(move==4){
+            // to fix: never changes the drop amount
+            // change the cargo that is carried by the helicopter
+            int d=trip.dry_food_pickup;
+            int p=trip.perishable_food_pickup;
+            int o=trip.other_supplies_pickup;
+            double dw=problem.packages[0].weight;
+            double pw=problem.packages[1].weight;
+            double ow=problem.packages[2].weight;
 
+            double curr_weight=d*dw+p*pw+o*ow;
+            double rem_capacity=currHeli.weight_capacity-curr_weight;
+
+            if(rem_capacity>=pw){
+                trip.perishable_food_pickup++;
+            }
+            else if(trip.dry_food_pickup>0){
+                while(trip.dry_food_pickup>0 && rem_capacity<pw){
+                    trip.dry_food_pickup--;
+                    rem_capacity+=dw;
+                    trip.perishable_food_pickup++;
+                }
+            }
+            else if(rem_capacity>=dw){
+                trip.dry_food_pickup++;
+            }
+            else if(rem_capacity>=ow){
+                trip.other_supplies_pickup++;
+            }
+        }
         else if(move==5){
             // delete a trip -> changes the numbers of trip
             if(!candidate[i].trips.empty()) candidate[i].trips.pop_back();
@@ -180,8 +214,11 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             best=score;
         }
 
+        // neighbours.push_back(candidate);
     }
 
+    // cout<<"Best neighbour is :"<<endl;
+    // printSolution(const_cast<Solution&>(bestSoln),problem);
     return bestSoln;
 }
 
@@ -192,9 +229,9 @@ Solution generateInitialSolution(const ProblemData& problem){
     Solution soln = Solution();
     int H=problem.helicopters.size();
 
-    double dw=problem.packages[0].weight;
-    double pw=problem.packages[1].weight;
-    double ow=problem.packages[2].weight;
+    int dw=problem.packages[0].weight;
+    int pw=problem.packages[1].weight;
+    int ow=problem.packages[2].weight;
 
     for(int h=0;h<H;h++){
 
@@ -208,7 +245,7 @@ Solution generateInitialSolution(const ProblemData& problem){
 
         bool assigned=false;
         Point home=problem.cities[currHeli.home_city_id-1];
-        for(const auto& village : problem.villages){
+        for(auto village : problem.villages){
             if(2*distance(home,village.coords)<=currHeli.distance_capacity){
                 drop.village_id=village.id;
                 assigned=true;
@@ -221,24 +258,19 @@ Solution generateInitialSolution(const ProblemData& problem){
             continue;
         }
 
-        double capacity_to_use = currHeli.weight_capacity;
-        int d=(capacity_to_use*0.4)/dw;
-        int p=(capacity_to_use*0.5)/dw;
+        int change=random_number(0,currHeli.weight_capacity/4);
 
-        double remaining_weight=capacity_to_use-(d*dw)-(p*pw);
-        int o=0;
-        if(remaining_weight>0) o=remaining_weight/ow;
+        int d = (currHeli.weight_capacity/2-change)/dw;
+        int p = (currHeli.weight_capacity/2-change)/pw;
+        int o = (currHeli.weight_capacity - d*dw - p*pw)/ow;
 
         drop.dry_food=d;
         drop.perishable_food=p;
         drop.other_supplies=o;
 
-        trip.dry_food_pickup=d;
-        trip.perishable_food_pickup=p;
-        trip.other_supplies_pickup=o;
-
         trip.drops.push_back(drop);
         heli_plan.trips.push_back(trip);
+
         soln.push_back(heli_plan);
     }
 
@@ -261,7 +293,7 @@ Solution solve(const ProblemData& problem){
 
     double time = problem.time_limit_minutes;
     auto start=clk::now();
-    auto end=start+chrono::duration<double>(time*60.0-1.0);
+    auto end=start+chrono::duration<double>(time*60.0);
 
     uint64_t iters=0;
     while(true){
@@ -275,14 +307,103 @@ Solution solve(const ProblemData& problem){
         }
 
         // check time
-        if((++iters & 0xFFF)==0){
+        if((++iters & 0xFFFF)==0){
             if(clk::now()>=end) break;
         }
     }
 
     cout<<"Solver finished."<<endl;
-    cout<<"Evaluation for the solution is : "<<evaluate(currSoln,problem)<<endl;
     return currSoln;
 
 }
 
+// int main() {
+//     // 1. SETUP THE PROBLEM with the new data
+//     ProblemData prob;
+//
+//     prob.time_limit_minutes = 1;
+//     prob.d_max = 100;
+//
+//     // Packages: {weight, value}
+//     prob.packages = {{0.01, 1}, {0.1, 2}, {0.005, 0.1}};
+//
+//     // Cities: {x, y}
+//     prob.cities = {{0, 0}, {10, 10}};
+//
+//     // Villages: {id, {coords}, population}
+//     Village v1 = {1, {0, 5}, 1000};
+//     Village v2 = {2, {0, 10}, 1000};
+//     prob.villages = {v1, v2};
+//
+//     // Helicopters: {id, home_city_id, wcap, dcap, F, alpha}
+//     Helicopter h1 = {1, 1, 100, 25, 10, 1};
+//     Helicopter h2 = {2, 2, 100, 50, 10, 1};
+//     prob.helicopters = {h1, h2};
+//
+//
+//     // 2. CREATE A SIMPLE, PREDICTABLE INITIAL SOLUTION
+//     Solution initialSolution;
+//
+//     // Plan for Helicopter 1
+//     HelicopterPlan plan1;
+//     plan1.helicopter_id = 1;
+//     Trip trip1 = {50, 10, 0, {{1, 50, 10, 0}}}; // Pickup 50d, 10p, 0o. Drop at Village 1.
+//     plan1.trips.push_back(trip1);
+//     initialSolution.push_back(plan1);
+//
+//     // Plan for Helicopter 2
+//     HelicopterPlan plan2;
+//     plan2.helicopter_id = 2;
+//     Trip trip2 = {60, 5, 0, {{2, 60, 5, 0}}}; // Pickup 60d, 5p, 0o. Drop at Village 2.
+//     plan2.trips.push_back(trip2);
+//     initialSolution.push_back(plan2);
+//
+//
+//     // 3. PRINT THE ORIGINAL SOLUTION
+//     std::cout << "--- ORIGINAL SOLUTION ---" << std::endl;
+//     printSolution(initialSolution, prob);
+//
+//
+//     // 4. GENERATE ALL NEIGHBOURS
+//     std::cout << "\n--- GENERATING ALL NEIGHBOURS ---" << std::endl;
+//
+//     // NOTE: This logic assumes you have a global vector `neighbours` and your
+//     // `neighbour` function adds candidates to it.
+//     // It is very important to clear the global vector before calling the function.
+//     neighbours.clear(); 
+//     Solution bestInternalNeighbour = neighbour(initialSolution, prob);
+//     std::vector<Solution> candidates = neighbours;
+//
+//
+//     // 5. PRINT ALL GENERATED CANDIDATES
+//     if (candidates.empty()) {
+//         std::cout << "No valid neighbors were generated in this step." << std::endl;
+//     } else {
+//         std::cout << "\n--- " << candidates.size() << " CANDIDATE NEIGHBOURS FOUND ---" << std::endl;
+//         int i = 1;
+//         for (auto& candidate : candidates) {
+//             std::cout << "\n--- Candidate #" << i++ << " ---";
+//             printSolution(candidate, prob);
+//         }
+//     }
+//
+//
+//     // 6. FIND AND DISPLAY THE CHOSEN NEIGHBOUR (the one with the highest score)
+//     Solution bestNeighbour = initialSolution;
+//     double bestScore = evaluate(initialSolution, prob);
+//
+//     for (auto& candidate : candidates) {
+//         double candidateScore = evaluate(candidate, prob);
+//         if (candidateScore > bestScore) {
+//             bestScore = candidateScore;
+//             bestNeighbour = candidate;
+//         }
+//     }
+//
+//     std::cout << "\n========================================" << std::endl;
+//     std::cout << "--- THE CHOSEN NEIGHBOUR ---" << std::endl;
+//     std::cout << "========================================" << std::endl;
+//     printSolution(bestNeighbour, prob);
+//
+//     return 0;
+// }
