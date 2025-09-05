@@ -1,0 +1,13 @@
+Input:
+TMax
+DMax
+w(d) v(d) w(p) v(p) w(o) and v(o)
+C C1_x C1_y C2_x ...
+V V1_x V1_y V1_n ...
+H H1_C, WCap, DCap, F, alpha, ...
+
+Output:
+H_id numTrips
+n(d) n(p) n(o) V V1 n(d) n(p) n(o) V2 n(d)...
+-1
+Repeat
