@@ -2,6 +2,7 @@
 #include <iostream>
 #include "utils.h"
 #include <set>
+#include <algorithm>
 
 using namespace std;
 
@@ -195,6 +196,9 @@ Solution generateInitialSolution(const ProblemData& problem){
     double dw=problem.packages[0].weight;
     double pw=problem.packages[1].weight;
     double ow=problem.packages[2].weight;
+    double dv=problem.packages[0].value;
+    double pv=problem.packages[1].value;
+    double ov=problem.packages[2].value;
 
     for(int h=0;h<H;h++){
 
@@ -222,12 +226,40 @@ Solution generateInitialSolution(const ProblemData& problem){
         }
 
         double capacity_to_use = currHeli.weight_capacity;
-        int d=(capacity_to_use*0.4)/dw;
-        int p=(capacity_to_use*0.5)/dw;
-
-        double remaining_weight=capacity_to_use-(d*dw)-(p*pw);
-        int o=0;
-        if(remaining_weight>0) o=remaining_weight/ow;
+        
+        // Calculate value per weight for each package type
+        double dry_value_per_weight = dv / dw;
+        double perishable_value_per_weight = pv / pw;
+        double other_value_per_weight = ov / ow;
+        
+        // Create pairs of (value_per_weight, package_type) and sort by efficiency
+        vector<pair<double, int>> efficiency;
+        efficiency.push_back({dry_value_per_weight, 0}); // 0 = dry food
+        efficiency.push_back({perishable_value_per_weight, 1}); // 1 = perishable food
+        efficiency.push_back({other_value_per_weight, 2}); // 2 = other supplies
+        
+        std::sort(efficiency.rbegin(), efficiency.rend()); // Sort in descending order
+        
+        int d = 0, p = 0, o = 0;
+        double remaining_capacity = capacity_to_use;
+        
+        // Allocate packages based on efficiency
+        for(auto& eff : efficiency) {
+            int package_type = eff.second;
+            if(package_type == 0) { // dry food
+                int max_dry = remaining_capacity / dw;
+                d = max_dry;
+                remaining_capacity -= d * dw;
+            } else if(package_type == 1) { // perishable food
+                int max_perishable = remaining_capacity / pw;
+                p = max_perishable;
+                remaining_capacity -= p * pw;
+            } else { // other supplies
+                int max_other = remaining_capacity / ow;
+                o = max_other;
+                remaining_capacity -= o * ow;
+            }
+        }
 
         drop.dry_food=d;
         drop.perishable_food=p;
