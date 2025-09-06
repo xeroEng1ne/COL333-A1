@@ -9,31 +9,28 @@ int random_number(int l, int r) {
 }
 
 // returns the total value of a trip
-double getTripValue(Trip &trip, const ProblemData &problem) {
+double getTripValue(Trip& trip,const ProblemData& problem,vector<double>& food_delivered_so_far,vector<double>& other_delivered_so_far){
+    double marginal_value_gained=0.0;
+    for(const auto& drop : trip.drops){
+        const Village& village=problem.villages[drop.village_id-1];
+        double max_food_needed=village.population*9.0;
+        double food_room_left=max(0.0,max_food_needed-food_delivered_so_far[village.id]);
+        double food_in_this_drop=drop.dry_food+drop.perishable_food;
+        double effective_food_this_drop=min(food_in_this_drop,food_room_left);
 
-    int val=0;
-    // for a village, if more than 9 times the stranders amount of food is dropped, then no additional value is gained
-    for(const auto drops : trip.drops){
-        Village vil = problem.villages[drops.village_id-1];
-        int n = vil.population;
-        
-        int foodDrop=drops.dry_food+drops.perishable_food;
-        int dry_food_capped=drops.dry_food;
-        int perishable_food_capped=drops.perishable_food;
+        double effective_vp=min((double)drop.perishable_food,effective_food_this_drop);
+        marginal_value_gained+=effective_vp*problem.packages[1].value;
 
-        if(foodDrop>9*n){
-            double scale =(double)(9*n)/foodDrop;
-            dry_food_capped=drops.dry_food*scale;
-            perishable_food_capped=drops.perishable_food*scale;
-        }
+        double remaining_effective_food=effective_food_this_drop-effective_vp;
+        double effective_vd=min((double)drop.dry_food,remaining_effective_food);
+        marginal_value_gained+=effective_vd*problem.packages[0].value;
 
-        val+=(dry_food_capped*problem.packages[0].value);
-        val+=(perishable_food_capped*problem.packages[1].value);
-        val+=(drops.other_supplies*problem.packages[2].value);
+        double max_other_needed=village.population*1.0;
+        double other_room_left=max(0.0,max_other_needed-other_delivered_so_far[village.id]);
+        double effective_vo=min((double)drop.other_supplies,other_room_left);
+        marginal_value_gained+=effective_vo*problem.packages[2].value;
     }
-
-    return val;
-
+    return marginal_value_gained;
 }
 
 // return the total distance travelled in a trip from a home city
@@ -53,6 +50,19 @@ double getTripDistance(Trip &trip, const ProblemData &problem, const Point &home
 
 	totDist += distance(currPos, homeCity);
 	return totDist;
+}
+
+double getTripWeight(Trip& trip,const ProblemData& problem){
+    double dry_food_weight=problem.packages[0].weight;
+    double perishable_food_weight=problem.packages[1].weight;
+    double other_supplies_weight=problem.packages[2].weight;
+
+    double total_weight=0.0;
+    total_weight+=trip.dry_food_pickup*dry_food_weight;
+    total_weight+=trip.perishable_food_pickup*perishable_food_weight;
+    total_weight+=trip.other_supplies_pickup*other_supplies_weight;
+
+    return total_weight;
 }
 
 vector<double> getPackagesNumber(Trip& trip, const ProblemData& problem){
