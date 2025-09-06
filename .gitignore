@@ -1,0 +1,4 @@
+*.o
+main
+format_checker
+SampleInputOutput

@@ -109,7 +109,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // delete a village from the trip or delete the empty trip
 
             //debug
-            cout<<"debug : Move 1"<<endl;
+            // cout<<"debug : Move 1"<<endl;
 
             if(!trip.drops.empty()){
 
@@ -132,7 +132,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // add a village to the trip
 
             //debug
-            cout<<"//debug: Move 2"<<endl;
+            // cout<<"//debug: Move 2"<<endl;
 
             if(trip.drops.empty() || problem.villages.size() <= trip.drops.size()){
                 continue;
@@ -168,7 +168,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // Option A : Fill helicopter more
             if(rem_capacity>1e-5){
                 //debug
-                cout<<"Move 2 : option A"<<endl;
+                // cout<<"Move 2 : option A"<<endl;
 
                 double pw=problem.packages[1].weight;
                 int num_p_to_add=rem_capacity/pw;
@@ -180,7 +180,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // Option B : Rearrange some cargo
             else if(!trip.drops.empty()){
                 //debug
-                cout<<"Move 2 : option B"<<endl;
+                // cout<<"Move 2 : option B"<<endl;
                 int source_id=random_number(0,trip.drops.size()-1);
                 Drop& source=trip.drops[source_id];
 
@@ -204,19 +204,19 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             double new_helic_total_dist=total_distance_travlled-old_trip_distance+new_trip_distance;
 
             //debug
-            cout<<"//debug:   Checking add of Village "<<new_village_id<<": new trip_dist="<< new_trip_distance<<"/"<<currHeli.distance_capacity<<", new total_dist="<<new_helic_total_dist <<"/"<<problem.d_max<<endl;
+            // cout<<"//debug:   Checking add of Village "<<new_village_id<<": new trip_dist="<< new_trip_distance<<"/"<<currHeli.distance_capacity<<", new total_dist="<<new_helic_total_dist <<"/"<<problem.d_max<<endl;
 
-            if(new_trip_distance<=currHeli.distance_capacity && new_helic_total_dist<=problem.d_max){
-                trip=new_trip;
-                cout<<"//debug SUCCESS"<<endl;
-            }
+            // if(new_trip_distance<=currHeli.distance_capacity && new_helic_total_dist<=problem.d_max){
+            //     trip=new_trip;
+            //     cout<<"//debug SUCCESS"<<endl;
+            // }
         }
 
         else if(move==3){
             // change drop values of a village
             
             //debug
-            cout<<"//debug: Move 3"<<endl;
+            // cout<<"//debug: Move 3"<<endl;
 
             if(!trip.drops.empty()){
                 int drop_index=0;
@@ -227,7 +227,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
 
                 // upgrade d->p
                 //debug
-                cout<<"Move 3 : attempt upgrade"<<endl;
+                // cout<<"Move 3 : attempt upgrade"<<endl;
                 if(drop.dry_food>0){
                     drop.dry_food--;
                     trip.dry_food_pickup--;
@@ -250,7 +250,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // change the cargo that is carried by the helicopter
             
             //debug
-            cout<<"//deubg: Move 4"<<endl;
+            // cout<<"//deubg: Move 4"<<endl;
 
             if(!trip.drops.empty()){
 
@@ -305,7 +305,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // delete a trip -> changes the numbers of trip
 
             //debug
-            cout<<"//debug: Move 5"<<endl;
+            // cout<<"//debug: Move 5"<<endl;
             if(!candidate[i].trips.empty()){
                 int trip_to_remove=0;
                 if(candidate[i].trips.size()>1){
@@ -318,7 +318,7 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
             // add a new trip
 
             //debug
-            cout<<"//debug: Move "<<endl;
+            // cout<<"//debug: Move "<<endl;
 
             double dmax_remaining=problem.d_max-total_distance_travlled;
 
@@ -381,6 +381,145 @@ Solution neighbour(Solution& currSoln, const ProblemData& problem){
 
     return bestSoln;
 }
+
+
+Solution generateRandomSolution(const ProblemData& problem){
+    Solution soln = Solution();
+    int H = problem.helicopters.size();
+    
+    for(int h = 0; h < H; h++){
+        HelicopterPlan heli_plan = HelicopterPlan();
+        heli_plan.helicopter_id = h + 1;
+        
+        const Helicopter& currHeli = problem.helicopters[h];
+        Point home = problem.cities[currHeli.home_city_id - 1];
+        
+        double total_helicopter_distance = 0.0;
+        
+        // Generate random trips until constraints are met
+        while(total_helicopter_distance < problem.d_max * 0.9) { // Leave some buffer
+            Trip trip = Trip();
+            
+            // Randomly decide number of villages to visit (1 to min(5, total_villages))
+            int max_villages = min(5, (int)problem.villages.size());
+            int num_villages = random_number(1, max_villages);
+            
+            // Randomly select villages that are reachable
+            vector<int> reachable_villages;
+            for(const auto& village : problem.villages){
+                double round_trip_distance = 2 * distance(home, village.coords);
+                if(round_trip_distance <= currHeli.distance_capacity){
+                    reachable_villages.push_back(village.id);
+                }
+            }
+            
+            if(reachable_villages.empty()) break;
+            
+            // Randomly select villages for this trip
+            vector<int> selected_villages;
+            set<int> used_villages;
+            
+            for(int i = 0; i < num_villages && i < reachable_villages.size(); i++){
+                int rand_idx = random_number(0, reachable_villages.size() - 1);
+                int village_id = reachable_villages[rand_idx];
+                if(used_villages.find(village_id) == used_villages.end()){
+                    selected_villages.push_back(village_id);
+                    used_villages.insert(village_id);
+                }
+            }
+            
+            if(selected_villages.empty()) break;
+            
+            // Calculate trip distance
+            Point current_pos = home;
+            double trip_distance = 0.0;
+            for(int village_id : selected_villages){
+                Point village_pos = problem.villages[village_id - 1].coords;
+                trip_distance += distance(current_pos, village_pos);
+                current_pos = village_pos;
+            }
+            trip_distance += distance(current_pos, home); // Return to home
+            
+            // Check if this trip would violate constraints
+            if(trip_distance > currHeli.distance_capacity || 
+               total_helicopter_distance + trip_distance > problem.d_max){
+                break;
+            }
+            
+            // Randomly allocate packages without wasting weight capacity
+            double remaining_weight = currHeli.weight_capacity;
+            double dw = problem.packages[0].weight;
+            double pw = problem.packages[1].weight;
+            double ow = problem.packages[2].weight;
+            
+            int max_d = remaining_weight / dw;
+            int max_p = remaining_weight / pw;
+            int max_o = remaining_weight / ow;
+            
+            // Randomly distribute weight capacity among package types
+            int d = 0, p = 0, o = 0;
+            
+            // Random allocation strategy
+            while(remaining_weight >= min({dw, pw, ow})){
+                int package_type = random_number(0, 2);
+                if(package_type == 0 && remaining_weight >= dw){
+                    d++;
+                    remaining_weight -= dw;
+                } else if(package_type == 1 && remaining_weight >= pw){
+                    p++;
+                    remaining_weight -= pw;
+                } else if(package_type == 2 && remaining_weight >= ow){
+                    o++;
+                    remaining_weight -= ow;
+                }
+            }
+            
+            if(d == 0 && p == 0 && o == 0) break; // No packages to carry
+            
+            trip.dry_food_pickup = d;
+            trip.perishable_food_pickup = p;
+            trip.other_supplies_pickup = o;
+            
+            // Randomly distribute packages among selected villages
+            int remaining_d = d, remaining_p = p, remaining_o = o;
+            
+            for(int i = 0; i < selected_villages.size(); i++){
+                Drop drop = Drop();
+                drop.village_id = selected_villages[i];
+                
+                if(i == selected_villages.size() - 1){
+                    // Last village gets all remaining packages
+                    drop.dry_food = remaining_d;
+                    drop.perishable_food = remaining_p;
+                    drop.other_supplies = remaining_o;
+                } else {
+                    // Randomly distribute some packages
+                    int drop_d = remaining_d > 0 ? random_number(0, remaining_d) : 0;
+                    int drop_p = remaining_p > 0 ? random_number(0, remaining_p) : 0;
+                    int drop_o = remaining_o > 0 ? random_number(0, remaining_o) : 0;
+                    
+                    drop.dry_food = drop_d;
+                    drop.perishable_food = drop_p;
+                    drop.other_supplies = drop_o;
+                    
+                    remaining_d -= drop_d;
+                    remaining_p -= drop_p;
+                    remaining_o -= drop_o;
+                }
+                
+                trip.drops.push_back(drop);
+            }
+            
+            heli_plan.trips.push_back(trip);
+            total_helicopter_distance += trip_distance;
+        }
+        
+        soln.push_back(heli_plan);
+    }
+    
+    return soln;
+}
+
 
 //------------------ Initial Greedy Solution ----------------------//
 
@@ -485,12 +624,12 @@ Solution solve(const ProblemData& problem){
 
     cout<< "Starting solver..."<<endl;
 
-    Solution currSoln = generateInitialSolution(problem);
+    Solution currSoln = generateRandomSolution(problem);
     double hval = evaluate(currSoln, problem);
 
     double time = problem.time_limit_minutes;
     auto start=clk::now();
-    auto end=start+chrono::duration<double>(time*60.0-1.0);
+    auto end=start+chrono::duration<double>(time*10.0-1.0);
 
     uint64_t iters=0;
     while(true){
@@ -509,6 +648,8 @@ Solution solve(const ProblemData& problem){
         }
     }
 
+
+    // Solution currSoln = generateRandomSolution(problem);
     cout<<"Solver finished."<<endl;
     cout<<"Evaluation for the solution is : "<<evaluate(currSoln,problem)<<endl;
     return currSoln;
